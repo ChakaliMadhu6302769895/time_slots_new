@@ -13,7 +13,8 @@ class NextScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text("Next Screen"),
       ),
-      body: Center(
+      body: Container(
+        padding: EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -24,6 +25,40 @@ class NextScreen extends StatelessWidget {
             Text(
               "Selected Time: ${selectedTime.format(context)}",
               style: TextStyle(fontSize: 18),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Handle the action for the first button
+              },
+              style: ElevatedButton.styleFrom(
+                primary: Colors.blue,
+                padding: EdgeInsets.all(15.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+              ),
+              child: Text(
+                "Button 1",
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
+            SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                // Handle the action for the second button
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding: EdgeInsets.all(15.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+              ),
+              child: Text(
+                "Button 2",
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
             ),
           ],
         ),

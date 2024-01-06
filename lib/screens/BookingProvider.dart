@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'booking_details.dart';
 
 class BookingProvider with ChangeNotifier {
@@ -31,19 +30,17 @@ class BookingProvider with ChangeNotifier {
 
   void setTime(TimeOfDay time) {
     final formattedTime = "${time.hour}:${time.minute}";
-
-    // Check if the time slot is already booked on the selected date
     final formattedDateTime = selectedDate != null
         ? "${selectedDate!.year}-${selectedDate!.month}-${selectedDate!.day}-$formattedTime"
         : "";
 
     if (bookedSlots.contains(formattedDateTime)) {
-      // Unbook the time slot if it is already booked
-      bookedSlots.remove(formattedDateTime);
-    } else {
-      // Book the time slot if it is not booked
-      bookedSlots.add(formattedDateTime);
+      // If the slot is already booked, do nothing
+      return;
     }
+
+    // Update the set of booked slots
+    bookedSlots.add(formattedDateTime);
 
     selectedTime = time;
     saveBookedSlots();
@@ -55,7 +52,7 @@ class BookingWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bookingProvider = Provider.of<BookingProvider>(context);
-    bookingProvider.loadBookedSlots();
+    bookingProvider.loadBookedSlots(); 
 
     final List<TimeOfDay> timeSlots = [
       TimeOfDay(hour: 9, minute: 0),
@@ -126,7 +123,7 @@ class BookingWidget extends StatelessWidget {
                               height: 45.0,
                               decoration: BoxDecoration(
                                 color: bookingProvider.bookedSlots.contains(formattedDateTime)
-                                    ? Colors.brown // Indicator for booked time slot on the selected date
+                                    ? Colors.brown
                                     : Colors.blue,
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
