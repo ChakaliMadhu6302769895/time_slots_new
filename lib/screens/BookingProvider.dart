@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:time_slots_new/screens/booking_details.dart';
+
+import 'booking_details.dart';
 
 class BookingProvider with ChangeNotifier {
   DateTime? selectedDate;
@@ -31,21 +32,23 @@ class BookingProvider with ChangeNotifier {
   void setTime(TimeOfDay time) {
     final formattedTime = "${time.hour}:${time.minute}";
 
-    // Check if the time slot is already booked
-    if (bookedSlots.contains(formattedTime)) {
+    // Check if the time slot is already booked on the selected date
+    final formattedDateTime = selectedDate != null
+        ? "${selectedDate!.year}-${selectedDate!.month}-${selectedDate!.day}-$formattedTime"
+        : "";
+
+    if (bookedSlots.contains(formattedDateTime)) {
       // Unbook the time slot if it is already booked
-      bookedSlots.remove(formattedTime);
+      bookedSlots.remove(formattedDateTime);
     } else {
       // Book the time slot if it is not booked
-      bookedSlots.add(formattedTime);
+      bookedSlots.add(formattedDateTime);
     }
 
     selectedTime = time;
     saveBookedSlots();
     notifyListeners();
   }
-
-
 }
 
 class BookingWidget extends StatelessWidget {
@@ -113,13 +116,16 @@ class BookingWidget extends StatelessWidget {
                         if (timeIndex < timeSlots.length) {
                           final timeSlot = timeSlots[timeIndex];
                           final formattedTime = "${timeSlot.hour}:${timeSlot.minute}";
+                          final formattedDateTime =
+                          bookingProvider.selectedDate != null
+                              ? "${bookingProvider.selectedDate!.year}-${bookingProvider.selectedDate!.month}-${bookingProvider.selectedDate!.day}-$formattedTime"
+                              : "";
+
                           return Expanded(
                             child: Container(
                               height: 45.0,
                               decoration: BoxDecoration(
-                                // Inside the ListView.builder, modify the color logic for each time slot
-                                color: (bookingProvider.selectedDate != null &&
-                                    bookingProvider.bookedSlots.contains(formattedTime))
+                                color: bookingProvider.bookedSlots.contains(formattedDateTime)
                                     ? Colors.brown // Indicator for booked time slot on the selected date
                                     : Colors.blue,
                                 borderRadius: BorderRadius.circular(8.0),
@@ -174,7 +180,6 @@ class BookingWidget extends StatelessWidget {
                 style: TextStyle(color: Colors.black, fontSize: 15),
               ),
             ),
-
           ],
         ),
       ),
