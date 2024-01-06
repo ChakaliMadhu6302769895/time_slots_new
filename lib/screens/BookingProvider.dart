@@ -31,19 +31,21 @@ class BookingProvider with ChangeNotifier {
   void setTime(TimeOfDay time) {
     final formattedTime = "${time.hour}:${time.minute}";
 
-    if (selectedTime != null && selectedTime == time) {
-      // Time slot already selected, do nothing
-      return;
+    // Check if the time slot is already booked
+    if (bookedSlots.contains(formattedTime)) {
+      // Unbook the time slot if it is already booked
+      bookedSlots.remove(formattedTime);
+    } else {
+      // Book the time slot if it is not booked
+      bookedSlots.add(formattedTime);
     }
-
-    // Clear existing booked slots and book the most recently selected time slot
-    bookedSlots.clear();
-    bookedSlots.add(formattedTime);
 
     selectedTime = time;
     saveBookedSlots();
     notifyListeners();
   }
+
+
 }
 
 class BookingWidget extends StatelessWidget {
@@ -117,11 +119,6 @@ class BookingWidget extends StatelessWidget {
                               decoration: BoxDecoration(
                                 // Inside the ListView.builder, modify the color logic for each time slot
                                 color: (bookingProvider.selectedDate != null &&
-                                    bookingProvider.selectedTime != null &&
-                                    bookingProvider.selectedDate == bookingProvider.selectedDate &&
-                                    bookingProvider.selectedTime == timeSlot)
-                                    ? Colors.green // Indicator for selected time slot on the selected date
-                                    : (bookingProvider.selectedDate != null &&
                                     bookingProvider.bookedSlots.contains(formattedTime))
                                     ? Colors.brown // Indicator for booked time slot on the selected date
                                     : Colors.blue,
@@ -184,4 +181,3 @@ class BookingWidget extends StatelessWidget {
     );
   }
 }
-
