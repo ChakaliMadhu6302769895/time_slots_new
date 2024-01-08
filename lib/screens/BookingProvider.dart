@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'booking_details.dart';
 
 class BookingProvider with ChangeNotifier {
@@ -8,6 +9,7 @@ class BookingProvider with ChangeNotifier {
   TimeOfDay? selectedTime;
   Set<String> bookedSlots = {};
   bool loadedBookedSlots = false;
+  bool isTimeSlotAccepted = false;
 
   Future<void> loadBookedSlots() async {
     if (!loadedBookedSlots) {
@@ -28,31 +30,40 @@ class BookingProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void setTime(TimeOfDay time) {
+  void setTime(TimeOfDay time, bool isBooked) {
     final formattedTime = "${time.hour}:${time.minute}";
     final formattedDateTime = selectedDate != null
         ? "${selectedDate!.year}-${selectedDate!.month}-${selectedDate!.day}-$formattedTime"
         : "";
 
-    if (bookedSlots.contains(formattedDateTime)) {
-      // If the slot is already booked, do nothing
-      return;
+    if (isBooked) {
+      bookedSlots.add(formattedDateTime);
+      isTimeSlotAccepted = true; // Set the flag to true when time slot is accepted
+    } else {
+      bookedSlots.remove(formattedDateTime);
+      isTimeSlotAccepted = false; // Reset the flag when time slot is declined
     }
 
-    // Update the set of booked slots
-    bookedSlots.add(formattedDateTime);
 
     selectedTime = time;
     saveBookedSlots();
     notifyListeners();
   }
+
+  bool isTimeSlotBooked(TimeOfDay time) {
+    final formattedTime = "${time.hour}:${time.minute}";
+    final formattedDateTime =
+    selectedDate != null ? "${selectedDate!.year}-${selectedDate!.month}-${selectedDate!.day}-$formattedTime" : "";
+    return bookedSlots.contains(formattedDateTime);
+  }
+
 }
 
 class BookingWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bookingProvider = Provider.of<BookingProvider>(context);
-    bookingProvider.loadBookedSlots(); 
+    bookingProvider.loadBookedSlots();
 
     final List<TimeOfDay> timeSlots = [
       TimeOfDay(hour: 9, minute: 0),
@@ -88,17 +99,26 @@ class BookingWidget extends StatelessWidget {
               },
               child: Text(
                 "Choose Date",
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 15),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontSize: 15),
               ),
             ),
             Text(
               "Selected Date: ${bookingProvider.selectedDate?.toString() ?? 'Not selected'}",
-              style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),
             Text(
               "Select Time Slot:",
-              style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold),
             ),
             Expanded(
               child: ListView.builder(
@@ -108,13 +128,15 @@ class BookingWidget extends StatelessWidget {
                   return Row(
                     children: List.generate(
                       3,
-                          (index) {
+                      (index) {
                         final timeIndex = rowIndex * 3 + index;
                         if (timeIndex < timeSlots.length) {
                           final timeSlot = timeSlots[timeIndex];
-                          final formattedTime = "${timeSlot.hour}:${timeSlot.minute}";
-                          final formattedDateTime =
-                          bookingProvider.selectedDate != null
+                          final formattedTime =
+                              "${timeSlot.hour}:${timeSlot.minute}";
+                          final formattedDateTime = bookingProvider
+                                      .selectedDate !=
+                                  null
                               ? "${bookingProvider.selectedDate!.year}-${bookingProvider.selectedDate!.month}-${bookingProvider.selectedDate!.day}-$formattedTime"
                               : "";
 
@@ -122,16 +144,25 @@ class BookingWidget extends StatelessWidget {
                             child: Container(
                               height: 45.0,
                               decoration: BoxDecoration(
-                                color: bookingProvider.bookedSlots.contains(formattedDateTime)
-                                    ? Colors.brown
-                                    : Colors.blue,
+                                color: bookingProvider.selectedDate != null &&
+                                        bookingProvider.bookedSlots
+                                            .contains(formattedDateTime)
+                                    ? Colors
+                                        .grey // Indicator for booked time slot on the selected date
+                                    : Colors.lightGreen,
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                               margin: EdgeInsets.all(4.0),
                               child: ElevatedButton(
-                                onPressed: () {
-                                  bookingProvider.setTime(timeSlot);
-                                },
+                                onPressed: bookingProvider.selectedDate != null
+                                    ? () {
+                                        bool isBooked = bookingProvider
+                                            .isTimeSlotBooked(timeSlot);
+                                        bookingProvider.setTime(
+                                            timeSlot, !isBooked);
+                                      }
+                                    : null,
+                                // Disable the button if selectedDate is null
                                 style: ElevatedButton.styleFrom(
                                   primary: Colors.transparent,
                                   shadowColor: Colors.transparent,
@@ -160,7 +191,8 @@ class BookingWidget extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () {
-                if (bookingProvider.selectedDate != null && bookingProvider.selectedTime != null) {
+                if (bookingProvider.selectedDate != null &&
+                    bookingProvider.selectedTime != null) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(

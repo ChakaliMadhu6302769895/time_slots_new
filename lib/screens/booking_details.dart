@@ -1,5 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'BookingProvider.dart';
 
 class NextScreen extends StatelessWidget {
   final DateTime selectedDate;
@@ -9,6 +11,8 @@ class NextScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    BookingProvider bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+
     return Scaffold(
       appBar: AppBar(
         title: Text("Next Screen"),
@@ -29,24 +33,39 @@ class NextScreen extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Handle the action for the first button
+                bool isBooked = bookingProvider.isTimeSlotBooked(selectedTime);
+
+                if (!isBooked && !bookingProvider.isTimeSlotAccepted) {
+                  bookingProvider.setTime(selectedTime, true);
+                  // Set the flag to true when the time slot is accepted
+                  bookingProvider.isTimeSlotAccepted = true;
+                }
               },
+              // Disable the button if the time slot has been accepted
+              // This line ensures that the button won't be clickable if isTimeSlotAccepted is true
               style: ElevatedButton.styleFrom(
-                primary: Colors.blue,
+                primary: bookingProvider.isTimeSlotAccepted ? Colors.grey : Colors.blue,
                 padding: EdgeInsets.all(15.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.0),
                 ),
+                // Add this line to disable the button if the time slot has been accepted
+                onPrimary: bookingProvider.isTimeSlotAccepted ? null : Colors.blue,
               ),
               child: Text(
-                "Button 1",
+                "Accept",
                 style: TextStyle(fontSize: 18),
               ),
             ),
             SizedBox(height: 10),
             TextButton(
               onPressed: () {
-                // Handle the action for the second button
+                BookingProvider bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+                bool isBooked = bookingProvider.isTimeSlotBooked(selectedTime);
+
+                if (isBooked) {
+                  bookingProvider.setTime(selectedTime, false);
+                }
               },
               style: TextButton.styleFrom(
                 backgroundColor: Colors.green,
@@ -56,7 +75,7 @@ class NextScreen extends StatelessWidget {
                 ),
               ),
               child: Text(
-                "Button 2",
+                "Decline",
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),
             ),
