@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'BookingProvider.dart';
 
-class NextScreen extends StatelessWidget {
+class NextScreen extends StatefulWidget {
   final DateTime selectedDate;
   final TimeOfDay selectedTime;
 
   NextScreen({required this.selectedDate, required this.selectedTime});
+
+  @override
+  _NextScreenState createState() => _NextScreenState();
+}
+
+class _NextScreenState extends State<NextScreen> {
+  bool isAccepted = false;
+  bool isDeclined = false;
 
   @override
   Widget build(BuildContext context) {
@@ -23,59 +30,50 @@ class NextScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Selected Date: ${selectedDate.toString()}",
+              "Selected Date: ${widget.selectedDate.toString()}",
               style: TextStyle(fontSize: 18),
             ),
             Text(
-              "Selected Time: ${selectedTime.format(context)}",
+              "Selected Time: ${widget.selectedTime.format(context)}",
               style: TextStyle(fontSize: 18),
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                bool isBooked = bookingProvider.isTimeSlotBooked(selectedTime);
-
-                if (!isBooked && !bookingProvider.isTimeSlotAccepted) {
-                  bookingProvider.setTime(selectedTime, true);
-                  // Set the flag to true when the time slot is accepted
-                  bookingProvider.isTimeSlotAccepted = true;
-                }
+                handleAccept(context, bookingProvider, widget.selectedTime);
+                setState(() {
+                  isAccepted = !isAccepted;
+                });
               },
-              // Disable the button if the time slot has been accepted
-              // This line ensures that the button won't be clickable if isTimeSlotAccepted is true
               style: ElevatedButton.styleFrom(
-                primary: bookingProvider.isTimeSlotAccepted ? Colors.grey : Colors.blue,
+                primary: isAccepted ? Colors.grey : Colors.blue,
                 padding: EdgeInsets.all(15.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.0),
                 ),
-                // Add this line to disable the button if the time slot has been accepted
-                onPrimary: bookingProvider.isTimeSlotAccepted ? null : Colors.blue,
               ),
               child: Text(
-                "Accept",
-                style: TextStyle(fontSize: 18),
+                isAccepted ? "Accepted" : "Accept",
+                style: TextStyle(fontSize: 18 , color: Colors.white),
               ),
             ),
             SizedBox(height: 10),
             TextButton(
               onPressed: () {
-                BookingProvider bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-                bool isBooked = bookingProvider.isTimeSlotBooked(selectedTime);
-
-                if (isBooked) {
-                  bookingProvider.setTime(selectedTime, false);
-                }
+                handleDecline(context, bookingProvider, widget.selectedTime);
+                setState(() {
+                  isDeclined = !isDeclined;
+                });
               },
               style: TextButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: isDeclined ? Colors.red : Colors.green,
                 padding: EdgeInsets.all(15.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.0),
                 ),
               ),
               child: Text(
-                "Decline",
+                isDeclined ? "Declined" : "Decline",
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),
             ),
@@ -83,5 +81,25 @@ class NextScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+
+  void handleAccept(BuildContext context, BookingProvider bookingProvider, TimeOfDay selectedTime) {
+    bool isBooked = bookingProvider.isTimeSlotBooked(selectedTime);
+
+    if (!isBooked && !bookingProvider.isTimeSlotAccepted) {
+      bookingProvider.setTime(selectedTime, true);
+      bookingProvider.isTimeSlotAccepted = true;
+      bookingProvider.notifyListeners();
+    }
+  }
+
+  void handleDecline(BuildContext context, BookingProvider bookingProvider, TimeOfDay selectedTime) {
+    bool isBooked = bookingProvider.isTimeSlotBooked(selectedTime);
+
+    if (isBooked) {
+      bookingProvider.setTime(selectedTime, false);
+      bookingProvider.notifyListeners();
+    }
   }
 }
